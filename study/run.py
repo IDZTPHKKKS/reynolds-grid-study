@@ -274,6 +274,7 @@ def plan(c):
     print(f"{len(C)} cells:")
     for n in c["grids"]:
         print(f"  {n:>4}^2: " + ", ".join(f"Re {re:g}" for _, re, m in C if m == n))
+    print(f"fixed grid for the *_rs surrogates: {c.get('fixed_grid', 128)}^2")
     print(f"data: {c['trajectories']} trajectories per cell ({c['test_trajectories']} held out), "
           f"{snaps} snapshots each, about {gb:.0f} GB")
     for s in STAGES:
@@ -293,6 +294,7 @@ def main():
     ap.add_argument("--gpu-jobs", type=int, default=None, help="parallel train/eval tasks (default: 2 per GPU)")
     a = ap.parse_args()
     c = load(a.config)
+    os.environ["FIXED_GRID"] = str(c.get("fixed_grid", 128))
     if a.command == "plan":
         return plan(c)
     if a.command == "count":
@@ -308,7 +310,9 @@ def main():
         if s in ("train", "eval") and gpus:
             jobs = a.gpu_jobs or 2 * len(gpus)
         if s in ("manifest", "summary"):
-            jobs = 1
+            print(f"=== {s}", flush=True)
+            run_task(c, s, ())
+            continue
         print(f"=== {s}: {len(tasks(c, s))} tasks, {jobs} at a time", flush=True)
         if not run_stage(c, s, jobs, gpus if s in ("train", "eval") else [], a.threads):
             sys.exit(f"stopping: {s} had failures; fix and rerun, finished tasks are skipped")

@@ -1,7 +1,7 @@
 # Reynolds x grid study
 
 Forced 2D turbulence (Kolmogorov flow) on a table of Reynolds numbers and grids, and neural
-surrogates (CNN, U-Net, FNO; each on its native grid and on a fixed 128² grid) trained on every
+surrogates (CNN, U-Net, FNO; each on its native grid and on a fixed grid, 256² by default) trained on every
 cell and tested on every other cell. Each pair is labelled by what changes between training and
 test: Reynolds number only, grid only, or both.
 
@@ -96,6 +96,7 @@ rsync -av --include="*.csv" --exclude="*" user@cluster:reynolds-grid-study/runs/
 | `t_total`, `dt_sample` | length of each trajectory and the surrogate time step (same for all cells) |
 | `dt_times_n` | solver time step x grid size (0.32 keeps the CFL number near 0.5) |
 | `variants`, `seeds` | surrogates and training seeds |
+| `fixed_grid` | grid of the `*_rs` surrogates; must resolve the highest Re in the table |
 | `train`, `eval` | training and rollout settings |
 | `solver_overrides` | any key of the solver config (`configs/re_low.yaml` is the template) |
 

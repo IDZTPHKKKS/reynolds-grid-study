@@ -8,6 +8,7 @@ t_total: 12.0
 dt_sample: 0.4
 dt_times_n: 0.32
 variants: [baseline, baseline_rs]
+fixed_grid: 128
 seeds: [0]
 train:
   epochs: 1
