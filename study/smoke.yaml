@@ -1,0 +1,36 @@
+name: smoke
+reynolds: [10, 20]
+grids: [64, 128]
+max_re: {64: 20, 128: 10}
+trajectories: 2
+test_trajectories: 1
+t_total: 12.0
+dt_sample: 0.4
+dt_times_n: 0.32
+variants: [baseline, baseline_rs]
+seeds: [0]
+train:
+  epochs: 1
+  batch_size: 8
+  lr: 3.0e-4
+  max_pairs_per_traj: 20
+  width: 8
+  n_blocks: 2
+  accum_above_n: 256
+eval:
+  rollout_steps: 3
+  starts_per_traj: 2
+solver_overrides:
+  calibration:
+    tolerance: 0.5
+    max_iterations: 2
+    pilot_measure: 2.0
+    pilot_reequilibrate: 2.0
+  stationarity:
+    min_burn: 2.0
+    window: 2.0
+    chunk: 1.0
+    max_burn: 6.0
+    drift_e: 1.0
+    drift_z: 1.0
+    balance: 1.0

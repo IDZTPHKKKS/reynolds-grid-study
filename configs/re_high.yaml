@@ -1,0 +1,79 @@
+# Regime: HIGH Reynolds number (target Re_f = 160, measured at runtime).
+# Same conventions as re_low.yaml; 16x nu below re_low (nu = 1/(160*4) =
+# 1.5625e-3 at u_rms = 1).  Combined with re_low this gives a 16x measured
+# Reynolds span (and a 4x step from re_mid), supporting >= 10x cross-Re
+# extrapolation experiments in the sense of the Shi (2026) benchmark.
+# Resolution: N=256 -> k_max = 85 with measured k_d ~ 35-45 (k_max/k_d ~ 2).
+#
+# Stationarity/calibration parameters widened for the same reason as
+# re_mid.yaml (see docs/audit_report.md Finding 4): moderate-Re 2D Kolmogorov
+# flow shows large-amplitude, long-correlation-time E/Z intermittency that
+# re_low's tight window/thresholds cannot resolve. re_high was NOT directly
+# profiled the same way re_mid was (wall-clock budget); these values start
+# from re_mid's measured-and-validated settings, scaled up further since
+# higher Re is expected to have comparable-or-longer correlation times, not
+# shorter. If generation still fails to reach stationarity within max_burn,
+# that is a signal to profile re_high directly (as was done for re_mid)
+# rather than to loosen thresholds further without evidence.
+
+name: re_high
+description: "Kolmogorov flow, high-Reynolds regime (target measured Re_f = 160)"
+
+domain:
+  Lx: 6.283185307179586
+  Ly: 6.283185307179586
+
+grid:
+  Nx: 256
+  Ny: 256
+
+forcing:
+  type: kolmogorov
+  amplitude: 0.4          # starting guess; auto-calibrated
+  mode: 4
+
+viscosity:
+  mode: from_target_reynolds
+  target_re_f: 160.0
+  target_u_rms: 1.0
+  drag: 0.05
+
+time:
+  dt: 0.0022
+  t_total: 160.0
+  dt_sample: 0.4
+  max_courant: 1.0
+  fail_courant: 2.0
+
+numerics:
+  dealias: "2/3"
+  integrator: etdrk4
+
+initial_condition:
+  type: band_limited_random
+  u_rms: 1.0
+  k_cut: 8
+  seed: 3000
+
+calibration:
+  enabled: true
+  target_u_rms: 1.0
+  tolerance: 0.05
+  max_iterations: 6
+  pilot_measure: 100.0
+  pilot_reequilibrate: 150.0
+
+stationarity:
+  min_burn: 300.0
+  window: 300.0
+  chunk: 30.0
+  max_burn: 1200.0
+  drift_e: 0.12
+  drift_z: 0.15
+  balance: 0.02
+
+output:
+  n_traj: 2
+  seed_offset: 0
+  dtype: float32
+  directory: data

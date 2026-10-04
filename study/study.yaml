@@ -1,0 +1,27 @@
+name: full
+reynolds: [10, 20, 40, 80, 160, 320, 640]
+grids: [64, 128, 256, 512]
+max_re: {64: 20, 128: 80, 256: 320, 512: 640}
+trajectories: 8
+test_trajectories: 2
+t_total: 200.0
+dt_sample: 0.4
+dt_times_n: 0.32
+variants: [baseline, baseline_rs, unet, unet_rs, fno, fno_rs]
+seeds: [0, 1, 2, 3, 4]
+train:
+  epochs: 18
+  batch_size: 32
+  lr: 3.0e-4
+  max_pairs_per_traj: 1200
+  width: 32
+  n_blocks: 4
+  accum_above_n: 256
+eval:
+  rollout_steps: 20
+  starts_per_traj: 25
+solver_overrides:
+  calibration:
+    max_iterations: 8
+  stationarity:
+    max_burn: 400.0

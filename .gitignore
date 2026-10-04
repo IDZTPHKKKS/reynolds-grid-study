@@ -1,0 +1,10 @@
+runs/
+.venv/
+__pycache__/
+*.pyc
+neural/_checkpoints/
+neural/_results/
+burgers/_data/
+burgers/_results/
+data/
+.DS_Store

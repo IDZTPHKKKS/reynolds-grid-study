@@ -1,0 +1,87 @@
+# Regime: MIDDLE Reynolds number (target Re_f = 40, measured at runtime).
+# Same conventions as re_low.yaml; only the physics parameters differ.
+# 4x nu below re_low (nu = 1/(40*4) = 6.25e-3 at u_rms = 1).
+# Resolution: N=128 -> k_max = 42 with measured k_d ~ 15-20 (k_max/k_d ~ 2).
+#
+# Stationarity/calibration parameters below are WIDER than re_low's (found
+# during audit; see docs/audit_report.md Finding 4). A dedicated 300-time-unit
+# diagnostic run at this regime measured: relative std of instantaneous E
+# ~17% of its mean, with large-amplitude swings on a ~60-90 time-unit scale
+# (consistent with known intermittent switching between quasi-coherent states
+# in 2D Kolmogorov flow at moderate Re, e.g. Chandler & Kerswell 2013) --
+# NOT a bug (production-dissipation balance over the same data was excellent,
+# <1%, confirming genuine energetic equilibrium despite the large E/Z swings).
+# re_low's window=40/drift_e=0.02 are unreachable here in any practical time
+# (the split-half drift of a raw 40-unit window is dominated by which phase
+# of the ~60-90-unit oscillation it happens to sample, not by any secular
+# trend). window/drift_e/drift_z below were set from that measured trace
+# (at window>=220 the ACTUAL measured drift was already <0.12/<0.15) rather
+# than loosened blindly; balance stays tight since it is the fast-converging,
+# physically authoritative stationarity diagnostic (mean production = mean
+# dissipation) and was <1% even in the original failing run.
+
+name: re_mid
+description: "Kolmogorov flow, middle-Reynolds regime (target measured Re_f = 40)"
+
+domain:
+  Lx: 6.283185307179586
+  Ly: 6.283185307179586
+
+grid:
+  Nx: 128
+  Ny: 128
+
+forcing:
+  type: kolmogorov
+  amplitude: 0.55         # starting guess; auto-calibrated
+  mode: 4
+
+viscosity:
+  mode: from_target_reynolds
+  target_re_f: 40.0
+  target_u_rms: 1.0
+  drag: 0.05
+
+time:
+  dt: 0.002
+  t_total: 250.0
+  dt_sample: 0.4
+  max_courant: 1.0
+  fail_courant: 2.0
+
+numerics:
+  dealias: "2/3"
+  integrator: etdrk4
+
+initial_condition:
+  type: band_limited_random
+  u_rms: 1.0
+  k_cut: 8
+  seed: 6000
+
+calibration:
+  enabled: true
+  target_u_rms: 1.0
+  tolerance: 0.05        # was 0.03: unreachable given ~17% natural E variability
+                          # with a pilot_measure this project can afford; see note above
+  max_iterations: 6
+  pilot_measure: 80.0     # was 20.0: needs to span a fair fraction of the ~60-90
+                          # time-unit natural oscillation for a low-noise u_rms read
+  pilot_reequilibrate: 120.0
+
+stationarity:
+  min_burn: 250.0         # was 30.0
+  window: 250.0           # was 40.0: spans several natural oscillation cycles
+  chunk: 25.0              # was 5.0
+  max_burn: 900.0         # was 300.0
+  drift_e: 0.12            # was 0.02: data-justified, see note above (measured
+                          # drift at window>=220 on a real trace was <0.12)
+  drift_z: 0.15            # was 0.05 (measured <0.15 at window>=220)
+  balance: 0.02            # was 0.03, TIGHTENED: this is the reliable diagnostic
+                          # (measured <0.01 on the same trace)
+
+output:
+  n_traj: 2
+  seed_offset: 0
+  dtype: float32
+  directory: data
