@@ -310,7 +310,7 @@ def main():
         if s in ("manifest", "summary"):
             jobs = 1
         print(f"=== {s}: {len(tasks(c, s))} tasks, {jobs} at a time", flush=True)
-        if not run_stage(c, s, jobs, gpus if s in ("train", "eval") else [], a.threads) and a.command == "all":
+        if not run_stage(c, s, jobs, gpus if s in ("train", "eval") else [], a.threads):
             sys.exit(f"stopping: {s} had failures; fix and rerun, finished tasks are skipped")
 
 

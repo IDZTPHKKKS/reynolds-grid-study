@@ -29,23 +29,26 @@ See the plan first:
 python study/run.py study/study.yaml plan
 ```
 
-One machine (all cores, optional GPUs). Use `tmux` or `nohup` so it survives logging out:
+One machine, 24 cores by default, optional GPUs. Use `tmux` or `nohup` so it survives logging
+out:
 
 ```bash
 tmux new -s study
 . .venv/bin/activate
-JOBS=48 THREADS=1 GPUS=0,1 cluster/run_node.sh study/study.yaml
+cluster/run_node.sh study/study.yaml                    # 24 cores: 6 tasks x 4 threads
+CORES=16 GPUS=0,1 cluster/run_node.sh study/study.yaml  # 16 cores, training on GPUs 0 and 1
 ```
 
-`JOBS` is the number of parallel tasks, `THREADS` the CPU threads per task (FFT and torch),
-`GPUS` the GPU ids for training and evaluation (two tasks per GPU at a time; change with
-`--gpu-jobs`). A good split for the solver is `JOBS x THREADS` = number of cores.
+`CORES` is the total number of cores used, `THREADS` the threads per task (default 4, so
+`CORES / THREADS` tasks run at once), `GPUS` the GPU ids for training and evaluation (two tasks
+per GPU at a time). Each training task holds its cell's data in memory, up to about 3 GB for
+512² cells.
 
-Single stages, for example to give the 512² data more threads:
+Single stages (6 tasks x 4 threads = 24 cores):
 
 ```bash
-python study/run.py study/study.yaml stage calib --jobs 7 --threads 4
-python study/run.py study/study.yaml stage data --jobs 12 --threads 4
+python study/run.py study/study.yaml stage calib --jobs 6 --threads 4
+python study/run.py study/study.yaml stage data --jobs 6 --threads 4
 python study/run.py study/study.yaml stage manifest
 python study/run.py study/study.yaml stage train --gpus 0,1,2,3
 python study/run.py study/study.yaml stage eval --gpus 0,1,2,3
