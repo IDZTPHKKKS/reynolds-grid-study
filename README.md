@@ -39,6 +39,13 @@ cluster/run_node.sh study/study.yaml                    # 24 cores: 6 tasks x 4 
 CORES=16 GPUS=0,1 cluster/run_node.sh study/study.yaml  # 16 cores, training on GPUs 0 and 1
 ```
 
+With `GPUS` set, the flow solver also runs on the GPU (`SOLVER_DEVICE=cuda`, same ETDRK4
+scheme in double precision); `SOLVER_DEVICE=cpu` keeps it on the CPU. Check that both agree:
+
+```bash
+python scripts/check_gpu_solver.py --device cuda --n 256
+```
+
 `CORES` is the total number of cores used, `THREADS` the threads per task (default 4, so
 `CORES / THREADS` tasks run at once), `GPUS` the GPU ids for training and evaluation (two tasks
 per GPU at a time). Each training task holds its cell's data in memory, up to about 3 GB for

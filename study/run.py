@@ -345,7 +345,8 @@ def main():
             run_task(c, s, ())
             continue
         print(f"=== {s}: {len(tasks(c, s))} tasks, {jobs} at a time", flush=True)
-        if not run_stage(c, s, jobs, gpus if s in ("train", "eval") else [], a.threads):
+        on_gpu = s in ("train", "eval") or (s in ("calib", "data") and os.environ.get("SOLVER_DEVICE", "cpu") != "cpu")
+        if not run_stage(c, s, jobs, gpus if on_gpu else [], a.threads):
             sys.exit(f"stopping: {s} had failures; fix and rerun, finished tasks are skipped")
 
 

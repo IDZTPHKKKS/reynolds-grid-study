@@ -121,6 +121,7 @@ def generate_trajectory(cfg, amplitude: float, traj_index: int, outdir: str):
         "stationarity": report,
         "conventions_version": CONVENTIONS_VERSION,
         "versions": {"python": platform.python_version(), "numpy": np.__version__},
+        "solver_device": os.environ.get("SOLVER_DEVICE", "cpu"),
         "wall_time_s": time.time() - t0,
     }
     with open(os.path.join(outdir, f"{fname[:-4]}.json"), "w") as fh:

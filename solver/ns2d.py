@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time as _walltime
 from dataclasses import dataclass, field
 from typing import Callable, Optional
@@ -11,10 +12,64 @@ import numpy as np
 from .config import SimulationConfig
 from .diagnostics import courant_number, state_diagnostics, stationarity_report
 from .forcing import KolmogorovForcing
-from .integrator import make_integrator
+from .integrator import ETDRK4, make_integrator
 from .spectral import SpectralGrid2D
 
 __all__ = ["NS2D", "RunResult"]
+
+
+class _TorchETDRK4:
+    """ETDRK4 step of NS2D in torch (complex128), for SOLVER_DEVICE=cuda or torch:<device>."""
+
+    def __init__(self, sim, device):
+        import torch
+        self.torch = torch
+        self.device = torch.device(device)
+        g = sim.grid
+        c = sim.stepper.coeffs
+        ones = np.ones(g.k2.shape)
+        self.E, self.E2, self.Q, self.f1, self.f2, self.f3 = (self.tensor(x) for x in
+                                                              (c.E, c.E2, c.Q, c.f1, c.f2, c.f3))
+        self.ikx = self.tensor(1j * g.KX * ones)
+        self.iky = self.tensor(1j * g.KY * ones)
+        inv_k2 = 1.0 / g.k2_safe
+        inv_k2[0, 0] = 0.0
+        self.inv_k2 = self.tensor(inv_k2)
+        self.mask = self.tensor(g.keep_mask.astype(float))
+        self.shape = (g.Ny, g.Nx)
+        self.f = None
+
+    def tensor(self, a):
+        return self.torch.as_tensor(np.ascontiguousarray(a), dtype=self.torch.complex128, device=self.device)
+
+    def rhs(self, w):
+        fft, ifft = self.torch.fft.rfft2, self.torch.fft.irfft2
+        psi = w * self.inv_k2
+        u = ifft(self.iky * psi, s=self.shape)
+        v = ifft(-self.ikx * psi, s=self.shape)
+        om = ifft(w, s=self.shape)
+        nl = -(self.ikx * fft(u * om) + self.iky * fft(v * om)) * self.mask + self.f
+        nl[0, 0] = 0.0
+        return nl
+
+    def step(self, w):
+        nw = self.rhs(w)
+        a = self.E2 * w + self.Q * nw
+        na = self.rhs(a)
+        b = self.E2 * w + self.Q * na
+        nb = self.rhs(b)
+        cc = self.E2 * a + self.Q * (2 * nb - nw)
+        nc = self.rhs(cc)
+        w = (self.E * w + self.f1 * nw + self.f2 * (na + nb) + self.f3 * nc) * self.mask
+        w[0, 0] = 0.0
+        return w
+
+    def load(self, omega_hat, forcing_hat):
+        self.f = self.tensor(forcing_hat)
+        return self.tensor(omega_hat)
+
+    def save(self, w):
+        return w.cpu().numpy().astype(np.complex128)
 
 
 @dataclass
@@ -49,6 +104,15 @@ class NS2D:
         )
         self.omega_hat: Optional[np.ndarray] = None
         self.time = 0.0
+        self._accel = None
+
+    def _accelerator(self):
+        dev = os.environ.get("SOLVER_DEVICE", "cpu")
+        if dev == "cpu" or not isinstance(self.stepper, ETDRK4):
+            return None
+        if self._accel is None:
+            self._accel = _TorchETDRK4(self, dev[len("torch:"):] if dev.startswith("torch:") else dev)
+        return self._accel
 
     # ------------------------------------------------------------------ RHS --
     def rhs_nonlinear(self, omega_hat: np.ndarray) -> np.ndarray:
@@ -148,9 +212,17 @@ class NS2D:
         sample_times, samples = [], []
         max_courant = 0.0
         t0_wall = _walltime.time()
+        acc = self._accelerator()
+        w = acc.load(self.omega_hat, self.forcing.f_omega_hat) if acc is not None else None
 
         for step in range(1, n_steps + 1):
-            self.step()
+            if acc is None:
+                self.step()
+            else:
+                w = acc.step(w)
+                self.time += self.dt
+                if step % diag_every == 0 or step % sample_every == 0 or step == n_steps:
+                    self.omega_hat = acc.save(w)
 
             if step % diag_every == 0 or step == n_steps:
                 d = self.state()
