@@ -9,6 +9,7 @@ dt_sample: 0.4
 dt_times_n: 0.32
 variants: [baseline, baseline_rs, unet, unet_rs, fno, fno_rs]
 fixed_grid: 256
+calib_factor: 2
 seeds: [0, 1, 2, 3, 4]
 train:
   epochs: 18
@@ -27,4 +28,4 @@ solver_overrides:
     tolerance: 0.05
     pilot_measure: 60.0
   stationarity:
-    max_burn: 400.0
+    max_burn: 800.0

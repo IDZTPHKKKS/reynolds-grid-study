@@ -62,6 +62,10 @@ def tasks(c, stage):
 
 def cell_config(c, i):
     name, re, n = cells(c)[i]
+    return make_config(c, name, re, n, i)
+
+
+def make_config(c, name, re, n, i):
     raw = yaml.safe_load(open(os.path.join(ROOT, "configs", "re_low.yaml")))
     raw["name"] = name
     raw["description"] = f"Kolmogorov flow, target Re_f = {re:g}, {n}^2 grid"
@@ -94,8 +98,11 @@ def run_calib(c, re):
     out = calib_file(c, re)
     if os.path.exists(out):
         return
-    i = min((k for k, (_, r, _) in enumerate(cells(c)) if r == re), key=lambda k: cells(c)[k][2])
-    cfg = load_config(cell_config(c, i))
+    f = c.get("calib_factor", 1)
+    n = min(g for g in c["grids"] if re <= f * c["max_re"][g])
+    k = sorted({r for _, r, _ in cells(c)}).index(re)
+    name = f"calib_re{re:g}_n{n}"
+    cfg = load_config(make_config(c, name, re, n, 900 + k))
     method = "iteration"
     try:
         A, hist = calibrate_amplitude(cfg)
@@ -106,7 +113,7 @@ def run_calib(c, re):
         A, method = fit_amplitude(hist, cfg.calibration.target_u_rms), "fit"
         print(f"no convergence; amplitude from a power-law fit of {len(hist)} measurements: A = {A:.4f}", flush=True)
     with open(out, "w") as fh:
-        json.dump({"re": re, "calibrated_on": cells(c)[i][0], "amplitude": A, "method": method,
+        json.dump({"re": re, "calibrated_on": name, "amplitude": A, "method": method,
                    "history": hist}, fh, indent=2)
 
 

@@ -101,7 +101,9 @@ rsync -av --include="*.csv" --exclude="*" user@cluster:reynolds-grid-study/runs/
 | `solver_overrides` | any key of the solver config (`configs/re_low.yaml` is the template) |
 
 The forcing amplitude is calibrated once per Reynolds number (target u_rms = 1) on the
-coarsest grid of the table that resolves it, and reused on the finer grids.
+coarsest grid with Re <= `calib_factor` x `max_re[grid]` (u_rms is a large-scale quantity), and
+reused on all grids. If the iteration does not converge within the tolerance, the amplitude comes
+from a power-law fit of all its measurements.
 
 ## Other entry points
 
