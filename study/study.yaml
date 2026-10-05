@@ -24,5 +24,7 @@ eval:
 solver_overrides:
   calibration:
     max_iterations: 8
+    tolerance: 0.05
+    pilot_measure: 60.0
   stationarity:
     max_burn: 400.0

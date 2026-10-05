@@ -62,7 +62,9 @@ def calibrate_amplitude(cfg, verbose: bool = True):
         sim.forcing = KolmogorovForcing(A, cfg.forcing.mode, sim.grid)
         sim.run(cfg.calibration.pilot_reequilibrate,
                 diagnostics_interval=cfg.calibration.pilot_reequilibrate)
-    raise RuntimeError(f"Amplitude calibration did not converge: {history}")
+    err = RuntimeError(f"Amplitude calibration did not converge: {history}")
+    err.history = history
+    raise err
 
 
 def generate_trajectory(cfg, amplitude: float, traj_index: int, outdir: str):

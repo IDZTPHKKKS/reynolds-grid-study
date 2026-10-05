@@ -95,9 +95,31 @@ def run_calib(c, re):
     if os.path.exists(out):
         return
     i = min((k for k, (_, r, _) in enumerate(cells(c)) if r == re), key=lambda k: cells(c)[k][2])
-    A, hist = calibrate_amplitude(load_config(cell_config(c, i)))
+    cfg = load_config(cell_config(c, i))
+    method = "iteration"
+    try:
+        A, hist = calibrate_amplitude(cfg)
+    except RuntimeError as e:
+        hist = getattr(e, "history", None)
+        if not hist:
+            raise
+        A, method = fit_amplitude(hist, cfg.calibration.target_u_rms), "fit"
+        print(f"no convergence; amplitude from a power-law fit of {len(hist)} measurements: A = {A:.4f}", flush=True)
     with open(out, "w") as fh:
-        json.dump({"re": re, "calibrated_on": cells(c)[i][0], "amplitude": A, "history": hist}, fh, indent=2)
+        json.dump({"re": re, "calibrated_on": cells(c)[i][0], "amplitude": A, "method": method,
+                   "history": hist}, fh, indent=2)
+
+
+def fit_amplitude(hist, target):
+    a = np.log([h["A"] for h in hist])
+    u = np.log([h["u_rms_measured"] for h in hist])
+    if np.ptp(a) < 1e-6:
+        return float(np.exp(a.mean()) * target / np.exp(u.mean()))
+    slope, icept = np.polyfit(a, u, 1)
+    if not 0.2 <= slope <= 2.0:
+        slope = 0.75
+        icept = u.mean() - slope * a.mean()
+    return float(np.exp((np.log(target) - icept) / slope))
 
 
 def run_data(c, i, t):
