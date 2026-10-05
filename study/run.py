@@ -197,11 +197,13 @@ def run_summary(c):
     mean_rows = []
     for (v, a, b), rs in sorted(groups.items()):
         base = rs[0]
-        mean_rows.append({k: base[k] for k in ("variant", "train", "train_re", "train_n", "test", "test_re",
-                                               "test_n", "category")} |
-                         {"seeds": len(rs)} |
-                         {f"{m}_{s}": f(np.array([r[m] for r in rs]))
-                          for m in ("step1", "rollout") for s, f in (("mean", np.mean), ("std", np.std))})
+        row = {k: base[k] for k in ("variant", "train", "train_re", "train_n", "test", "test_re", "test_n",
+                                    "category")}
+        row["seeds"] = len(rs)
+        for m in ("step1", "rollout"):
+            for s, f in (("mean", np.mean), ("std", np.std)):
+                row[f"{m}_{s}"] = f(np.array([r[m] for r in rs]))
+        mean_rows.append(row)
     write_csv(os.path.join(c["out"], "summary_mean.csv"), mean_rows)
     own = {(r["variant"], r["seed"], r["test"]): r["rollout"] for r in rows if r["category"] == "same"}
     excess = defaultdict(list)
