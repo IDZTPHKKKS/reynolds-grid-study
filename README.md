@@ -5,9 +5,10 @@ surrogates (CNN, U-Net, FNO; each on its native grid and on a fixed grid, 256² 
 cell and tested on every other cell. Each pair is labelled by what changes between training and
 test: Reynolds number only, grid only, or both.
 
-Default table (`study/study.yaml`): Re_f = 10, 20, 40, 80, 160, 320, 640 on 64², 128², 256²,
-512², keeping the cells each grid resolves (19 cells), 8 trajectories per cell (2 held out for
-testing), 6 surrogates, 5 seeds.
+Default table (`study/study.yaml`): Re_f = 10, 20, 40, 80, 160, 320 on 64², 128², 256²,
+keeping the cells each grid resolves (12 cells), 8 trajectories per cell (2 held out for
+testing), 6 surrogates, 5 seeds. To add 512², put 640 in `reynolds`, 512 in `grids` and
+`512: 640` in `max_re`; finished work is kept and only the new cells are run.
 
 ## Setup
 

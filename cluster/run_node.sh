@@ -13,6 +13,6 @@ echo "using $CORES cores: $JOBS tasks x $THREADS threads${GPUS:+, GPUs $GPUS}, s
 run calib --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"}
 run data --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"}
 run manifest
-run train --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"}
-run eval --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"}
+run train --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"} ${GPU_JOBS:+--gpu-jobs "$GPU_JOBS"}
+run eval --jobs "$JOBS" --threads "$THREADS" ${GPUS:+--gpus "$GPUS"} ${GPU_JOBS:+--gpu-jobs "$GPU_JOBS"}
 run summary
