@@ -21,6 +21,8 @@ def advance(cfg, device, state, steps):
     os.environ["SOLVER_DEVICE"] = device
     sim = NS2D(cfg, forcing_amplitude=0.6)
     sim.omega_hat = state.copy()
+    if sim._accelerator() is not None:
+        sim._accelerator()
     t = time.time()
     res = sim.run(steps * cfg.time.dt, diagnostics_interval=steps * cfg.time.dt / 4)
     return sim.omega_hat, (time.time() - t) / steps, res
@@ -42,6 +44,7 @@ def main():
     sim.run(200 * cfg.time.dt)
     state = sim.omega_hat.copy()
     ref, t_cpu, r_cpu = advance(cfg, "cpu", state, a.steps)
+    advance(cfg, a.device, state, 20)
     out, t_dev, r_dev = advance(cfg, a.device, state, a.steps)
     rel = np.linalg.norm(out - ref) / np.linalg.norm(ref)
     dE = max(abs(x - y) / abs(x) for x, y in zip(r_cpu.diagnostics["E"], r_dev.diagnostics["E"]))
