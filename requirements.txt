@@ -3,3 +3,4 @@ scipy>=1.10
 PyYAML>=6.0
 torch>=2.0
 pytest>=7.0
+matplotlib>=3.5
