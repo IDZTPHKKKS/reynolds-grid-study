@@ -170,7 +170,8 @@ def run_train(c, v, i, s):
     if os.path.exists(os.path.join(p["checkpoints"], f"{v}_{name}{tag}_history.json")):
         return
     T = c["train"]
-    accum = max(1, n // 64) if (n >= T["accum_above_n"] and not v.endswith("_rs")) else 1
+    g = c.get("fixed_grid", 128) if v.endswith("_rs") else n
+    accum = max(1, g // 64) if g >= T["accum_above_n"] else 1
     train_one(v, name, T["epochs"], T["batch_size"], T["lr"], T["max_pairs_per_traj"], T["width"],
               T["n_blocks"], seed=s, accum_steps=accum, data_dir=p["data"], tag=tag,
               traj_ids=split(c)[0], ckpt_dir=p["checkpoints"])
