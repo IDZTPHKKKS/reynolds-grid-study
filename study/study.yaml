@@ -29,3 +29,4 @@ solver_overrides:
     pilot_measure: 60.0
   stationarity:
     max_burn: 800.0
+    accept_balanced: true

@@ -296,6 +296,9 @@ class NS2D:
                 if report.get("stationary"):
                     return burn, report
             if burn >= sc.max_burn:
+                if sc.accept_balanced and report and report["production_dissipation_mismatch"] < sc.balance:
+                    report["accepted_at_max_burn"] = True
+                    return burn, report
                 msg = (f"Stationarity not reached within {sc.max_burn} time units; "
                        f"last report: {report}")
                 raise RuntimeError(msg)

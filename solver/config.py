@@ -107,6 +107,7 @@ class StationarityConfig:
     drift_e: float = 0.02
     drift_z: float = 0.05
     balance: float = 0.03
+    accept_balanced: bool = False  # at max_burn, accept a state whose energy balance holds (flagged)
 
 
 @dataclass
